@@ -6,6 +6,7 @@ import {StyledLink} from 'baseui/link'
 const LINKS: [string, string][] = [
   ['/guess-number', 'Guess Number'],
   ['/btc-price-bot', 'BTC Price Bot'],
+  ['/off-chain-auction-bot', 'Off-Chain Auction Bot'],
 ]
 
 const Home: NextPage = () => {
