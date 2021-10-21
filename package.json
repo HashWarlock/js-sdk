@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "build": "yarn workspaces foreach run build",
-    "dev": "concurrently \"yarn dev:sdk\" \"yarn dev:example\"",
-    "dev:example": "yarn workspace example dev",
+    "dev": "concurrently \"yarn dev:sdk\" \"yarn dev:ghost-auction\"",
+    "dev:ghost-auction": "yarn workspace ghost-auction dev",
     "dev:sdk": "yarn workspace @phala/sdk dev",
     "lint": "yarn workspaces foreach run lint",
     "lint:fix": "yarn workspaces foreach run lint:fix",
