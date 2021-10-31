@@ -71,14 +71,15 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
     }, [api, account])
 
     const query = useCallback(
-        (type: 'queryOwner' | 'queryBotToken' | 'queryChatId' | 'queryNft' | 'queryNftNextPrice' ) => {
+        (type: 'queryOwner' | 'queryBotToken' | 'queryChatId' | 'queryNft' | 'queryNftPrice' | 'queryNextBidPrice' ) => {
             if (!certificateData) return
             const resultKeyMap: Record<typeof type, string> = {
                 queryOwner: 'owner',
                 queryBotToken: 'botToken',
                 queryChatId: 'chatId',
                 queryNft: 'nftId',
-                queryNftNextPrice: 'nextPrice',
+                queryNftPrice: 'topBid',
+                queryNextBidPrice: 'nextPrice',
             }
             const encodedQuery = api
                 .createType('BotRequest', {
@@ -124,7 +125,7 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
 
     const command = useCallback(
         (
-            type: 'SetOwner' | 'SetupBot' | 'SetupGhostAuction'
+            type: 'SetOwner' | 'SetupBot' | 'SetupGhostAuction' | 'SubmitAutoBid' | 'SettleAuction'
         ): FormEventHandler<HTMLButtonElement | HTMLFormElement> =>
             async (e) => {
                 e?.preventDefault()
@@ -142,7 +143,9 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                                         ? {owner: u8aToHex(decodeAddress(owner))}
                                         : type === 'SetupBot'
                                             ? {token, chat_id: chatId}
-                                            : { nft_id: nftId, reserve_price: topBid, auto_bid_increase: autoBidIncrease}
+                                            : type == 'SetupGhostAuction'
+                                                ? { nft_id: nftId, reserve_price: topBid, auto_bid_increase: autoBidIncrease}
+                                                : null
                             })
                             .toHex(),
                         signer,
@@ -190,7 +193,7 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                     Sign Certificate
                 </Button>
             </Step>
-            <Step title="Setup Bot">
+            <Step title="Setup Auctioneer Bot">
                 <div>
                     <form onSubmit={command('SetupBot')}>
                         <FormControl label="Bot Token">
@@ -215,6 +218,8 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                         </Button>
                     </form>
 
+
+
                     <form onSubmit={command('SetupGhostAuction')}>
                         <FormControl label="RMRK NFT ID">
                             <Input
@@ -228,17 +233,19 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                         <FormControl label="NFT Reserve Price (KSM)">
                             <Input
                                 autoFocus
+                                type="number"
                                 value={topBid}
-                                onChange={(e) => setReservePrice(e.currentTarget.value)}
+                                onChange={(e) => setReservePrice(e.currentTarget.valueAsNumber)}
                                 overrides={{Root: {style: {width: '500px'}}}}
                             ></Input>
                         </FormControl>
 
-                        <FormControl label="Auto Bid Increase (Decimal Format)">
+                        <FormControl label="Auto Bid Increase (Whole Numbers Only)">
                             <Input
                                 autoFocus
+                                type="number"
                                 value={autoBidIncrease}
-                                onChange={(e) => setAutoBidIncrease(e.currentTarget.value)}
+                                onChange={(e) => setAutoBidIncrease(e.currentTarget.valueAsNumber)}
                                 overrides={{Root: {style: {width: '500px'}}}}
                             ></Input>
                         </FormControl>
@@ -248,6 +255,19 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                         </Button>
                     </form>
 
+                    <Button
+                      overrides={{Root: {style: {margin: '16px 0'}}}}
+                      onClick={command('SubmitAutoBid')}
+                    >
+                        Send Auto Bid (Bid Price + Auto Bid Increase)
+                    </Button>
+
+                    <Button
+                      overrides={{Root: {style: {margin: '16px 0'}}}}
+                      onClick={command('SettleAuction')}
+                    >
+                        Settle Auction
+                    </Button>
 
 
                     <form onSubmit={command('SetOwner')}>
@@ -277,7 +297,10 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                             <Button onClick={() => query('queryNft')}>
                                 Query Current NFT Id in Auction
                             </Button>
-                            <Button onClick={() => query('queryNftNextBidPrice')}>
+                            <Button onClick={() => query('queryNftPrice')}>
+                                Query Current NFT Price in Auction
+                            </Button>
+                            <Button onClick={() => query('queryNextBidPrice')}>
                                 Query Next Expected Bid Price
                             </Button>
                         </ButtonGroup>
@@ -289,8 +312,11 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
 }
 
 const GhostAuctioneerBotPage: Page = () => {
+    console.log('Home')
+
     const [api, setApi] = useState<ApiPromise>()
     const [phala, setPhala] = useState<PhalaInstance>()
+    const unsubscribe = useRef<() => void>()
 
     useEffect(() => {
         createApi({
@@ -310,15 +336,16 @@ const GhostAuctioneerBotPage: Page = () => {
                     _enum: ['OriginUnavailable', 'NotAuthorized', 'NoAuctionDetected', 'NoNftDetected'],
                 },
                 BotRequestData: {
-                    _enum: ['QueryOwner', 'QueryBotToken', 'QueryChatId', 'QueryNft', 'QueryNftNextBidPrice'],
+                    _enum: ['QueryOwner', 'QueryBotToken', 'QueryChatId', 'QueryNft', 'QueryNftPrice', 'QueryNextBidPrice'],
                 },
                 BotResponseData: {
                     _enum: {
                         Owner: 'AccountId',
                         BotToken: 'String',
                         ChatId: 'String',
-                        Nft: 'String',
-                        NextBidPrice: 'u64',
+                        NftId: 'String',
+                        NftPrice: 'String',
+                        NextBidPrice: 'String',
                     },
                 },
                 BotRequest: {
@@ -334,8 +361,8 @@ const GhostAuctioneerBotPage: Page = () => {
                         SetOwner: 'ContractOwner',
                         SetupBot: 'SetupBot',
                         SetupGhostAuction: 'SetupGhostAuction',
-                        //SubmitBid: null,
-                        //SettleAuction: null,
+                        SubmitAutoBid: null,
+                        SettleAuction: null,
                     },
                 },
             },
@@ -347,7 +374,8 @@ const GhostAuctioneerBotPage: Page = () => {
                 })
             })
             .catch((err) => {
-                toaster.negative((err as Error).message, {})
+                console.error(err)
+                sendNotification('Oh no. I believe our connection is lost ^o^')
             })
     }, [])
 

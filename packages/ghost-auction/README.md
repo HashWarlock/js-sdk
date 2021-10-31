@@ -1,4 +1,4 @@
-# Phala JS SDK Example
+# Phala Ghost Auction
 
 ## Environment Variables
 
