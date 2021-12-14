@@ -78,8 +78,8 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                 queryBotToken: 'botToken',
                 queryChatId: 'chatId',
                 queryNft: 'nftId',
-                queryNftPrice: 'topBid',
-                queryNextBidPrice: 'nextPrice',
+                queryNftPrice: 'nftPrice',
+                queryNextBidPrice: 'nextBidPrice',
             }
             const encodedQuery = api
                 .createType('BotRequest', {
@@ -294,6 +294,10 @@ const GhostAuctioneerBot = ({api, phala}: {api: ApiPromise; phala: PhalaInstance
                             <Button onClick={() => query('queryChatId')}>
                                 Query Chat Id
                             </Button>
+                        </ButtonGroup>
+                    </Block>
+                    <Block marginTop="16px">
+                        <ButtonGroup size="compact">
                             <Button onClick={() => query('queryNft')}>
                                 Query Current NFT Id in Auction
                             </Button>
