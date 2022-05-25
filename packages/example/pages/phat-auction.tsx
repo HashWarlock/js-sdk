@@ -149,7 +149,6 @@ const PhatAuction: Page = () => {
       tokenId
     )
     // Ensure query is Ok
-    console.log(output?.toHuman())
     toaster.info(JSON.stringify(output?.toHuman()), {})
   }
   // Bid on the auction
@@ -182,7 +181,6 @@ const PhatAuction: Page = () => {
         {}
       )
       // Ensure query is Ok
-      console.log(output?.toHuman())
       toaster.info(JSON.stringify(output?.toHuman()), {})
     }
   }
@@ -213,7 +211,6 @@ const PhatAuction: Page = () => {
         {}
       )
       // Ensure query is Ok
-      console.log(output?.toHuman())
       toaster.info(JSON.stringify(output?.toHuman()), {})
     }
   }

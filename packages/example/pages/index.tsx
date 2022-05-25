@@ -9,7 +9,7 @@ const LINKS: [string, string][] = [
   ['/get-ip', 'Get IP'],
   ['/redeem-poap', 'Redeem POAP'],
   ['/phat-auction', 'Phat Auction'],
-  ['/roshambo', 'Battle The Hand Czar']
+  ['/roshambo', 'Battle The Hand Czar'],
 ]
 
 const Home: NextPage = () => {
