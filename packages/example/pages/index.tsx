@@ -8,6 +8,7 @@ const LINKS: [string, string][] = [
   ['/flipper', 'Flipper'],
   ['/get-ip', 'Get IP'],
   ['/redeem-poap', 'Redeem POAP'],
+  ['/nouns-subgraph', 'Can I Ape into NounsDAO?']
 ]
 
 const Home: NextPage = () => {
