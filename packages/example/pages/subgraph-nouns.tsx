@@ -7,13 +7,13 @@ import {ButtonGroup} from 'baseui/button-group'
 import {Block} from 'baseui/block'
 import {Input} from 'baseui/input'
 import {toaster} from 'baseui/toast'
+import {HeadingMedium, ParagraphSmall} from 'baseui/typography'
 import {useAtom} from 'jotai'
 import accountAtom from '../atoms/account'
 import {getSigner} from '../lib/polkadotExtension'
 import ContractLoader from '../components/ContractLoader'
-import {copy} from "../lib/copy";
 
-const NounsSubGraph: Page = () => {
+const SubgraphNouns: Page = () => {
   const [account] = useAtom(accountAtom)
   const [certificateData, setCertificateData] = useState<CertificateData>()
   const [api, setApi] = useState<ApiPromise>()
@@ -59,7 +59,7 @@ const NounsSubGraph: Page = () => {
     try {
       const signer = await getSigner(account)
       await contract.tx
-        .setAcceptablePrice({price})
+        .setAcceptablePrice({}, price)
         .signAndSend(account.address, {signer}, (status) => {
           if (status.isFinalized) {
             toaster.clear(toastKey)
@@ -77,19 +77,83 @@ const NounsSubGraph: Page = () => {
 
   const onIsNounAffordable = async () => {
     if (!certificateData || !contract) return
-      const {output} = await contract.query.isNounAffordable(certificateData as any, {})
+    const {output} = await contract.query.isNounAffordable(
+      certificateData as any,
+      {}
+    )
     // eslint-disable-next-line no-console
     console.log(output?.toHuman())
     toaster.info(JSON.stringify(output?.toHuman()), {})
+  }
+
+  const onGetNounsId = async () => {
+    if (!certificateData || !contract) return
+    const {output} = await contract.query.getNounsId(certificateData as any, {})
+    // eslint-disable-next-line no-console
+    console.log(output?.toHuman())
+    toaster.info(JSON.stringify(output?.toHuman()), {})
+  }
+
+  const onGetCurrentBid = async () => {
+    if (!certificateData || !contract) return
+    const {output} = await contract.query.getCurrentBid(certificateData as any, {})
+    // eslint-disable-next-line no-console
+    console.log(output?.toHuman())
+    toaster.info(JSON.stringify(output?.toHuman()), {})
+  }
+
+  const onGetAcceptablePrice = async () => {
+    if (!certificateData || !contract) return
+    const {output} = await contract.query.getAcceptablePrice(certificateData as any, {})
+    // eslint-disable-next-line no-console
+    console.log(output?.toHuman())
+    toaster.info(JSON.stringify(output?.toHuman()), {})
+  }
+
+  const onGetLatestNounsInfo = async () => {
+    if (!certificateData || !contract || !account) return
+    const {output} = await contract.query.getLatestNounsInfo(
+      certificateData as any,
+      {}
+    )
+    console.log(output?.toHuman())
+    toaster.info(JSON.stringify(output?.toHuman()), {})
+    // outputJson is a `Result<NounsInfoFE>`
+    const outputJson = output?.toJSON() as any
+
+    if (outputJson.ok) {
+      toaster.positive('Retrieved the latest Nouns auction information', {})
+      // Set the latest information on the current Nouns auction
+      const toastKey = toaster.info(
+        'Setting latest info on current Nouns auction...',
+        {
+          autoHideDuration: 0,
+        }
+      )
+      try {
+        const signer = await getSigner(account)
+        await contract.tx
+          .setNounsInfo({}, outputJson.ok)
+          .signAndSend(account.address, {signer}, (status) => {
+            if (status.isFinalized) {
+              toaster.clear(toastKey)
+              toaster.positive('Latest Nouns info transaction is finalized', {})
+            }
+          })
+      } catch (err) {
+        toaster.clear(toastKey)
+        toaster.negative((err as Error).message, {})
+      }
+    } else {
+      toaster.negative(outputJson.err, {})
+    }
   }
 
   return contract ? (
     certificateData ? (
       <>
         <HeadingMedium as="h1">Set Affordable Price</HeadingMedium>
-        <ParagraphSmall>
-          Max Price (ETH):
-        </ParagraphSmall>
+        <ParagraphSmall>Max Price (ETH):</ParagraphSmall>
 
         <Block display="flex">
           <Input
@@ -120,15 +184,25 @@ const NounsSubGraph: Page = () => {
           User Functions
         </HeadingMedium>
         <ParagraphSmall>
-          Update current Nouns auction data or query if the admin of the contract can afford to outbid the current top bidder.
+          Update current Nouns auction data or query if the admin of the
+          contract can afford to outbid the current top bidder.
         </ParagraphSmall>
 
         <ButtonGroup>
           <Button disabled={!account} onClick={onGetLatestNounsInfo}>
             Update
           </Button>
-          <Button disabled={!certificateData} onClick={onQuery}>
+          <Button disabled={!certificateData} onClick={onIsNounAffordable}>
             APE into Nouns?
+          </Button>
+          <Button disabled={!certificateData} onClick={onGetNounsId}>
+            Noun ID
+          </Button>
+          <Button disabled={!certificateData} onClick={onGetCurrentBid}>
+            Last Updated Bid
+          </Button>
+          <Button disabled={!certificateData} onClick={onGetAcceptablePrice}>
+            Max Affordable Price
           </Button>
         </ButtonGroup>
       </>
@@ -139,7 +213,7 @@ const NounsSubGraph: Page = () => {
     )
   ) : (
     <ContractLoader
-      name="nounsSubgraph"
+      name="subgraphNouns"
       onLoad={({api, contract}) => {
         setApi(api)
         setContract(contract)
@@ -148,6 +222,6 @@ const NounsSubGraph: Page = () => {
   )
 }
 
-NounsSubGraph.title = 'Can I Ape into NounsDAO?'
+SubgraphNouns.title = 'Can I Ape into NounsDAO?'
 
-export default NounsSubGraph
+export default SubgraphNouns
