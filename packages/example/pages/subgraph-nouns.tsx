@@ -81,9 +81,14 @@ const SubgraphNouns: Page = () => {
       certificateData as any,
       {}
     )
-    // eslint-disable-next-line no-console
+    const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
-    toaster.info(JSON.stringify(output?.toHuman()), {})
+    // eslint-disable-next-line no-console
+    if (outputJson.ok == true) {
+      toaster.positive('Noun is reasonable to bid on!', {})
+    } else {
+      toaster.positive('NOT TODAY!!!', {})
+    }
   }
 
   const onGetNounsId = async () => {
