@@ -8,6 +8,7 @@ const LINKS: [string, string][] = [
   ['/flipper', 'Flipper'],
   ['/get-ip', 'Get IP'],
   ['/redeem-poap', 'Redeem POAP'],
+  ['/phat-rpc', 'Phat RPC'],
 ]
 
 const Home: NextPage = () => {
