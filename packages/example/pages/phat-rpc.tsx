@@ -26,8 +26,8 @@ const PhatRpc: Page = () => {
   const [contract, setContract] = useState<ContractPromise>()
   const [apiKey, setApiKey] = useState<string>('')
   const [accountId, setAccountId] = useState<string>('')
-  const [chain, setChain] = useState<any>([])
-  const [queryChain, setQueryChain] = useState<any>([])
+  const [chain, setChain] = useState<string>('')
+  const [queryChain, setQueryChain] = useState<string>('')
   const dropDownOptions = [
     {label: 'Astar', value: 'astar'},
     {label: 'Encointer', value: 'encointer'},
@@ -74,12 +74,6 @@ const PhatRpc: Page = () => {
     setCertificateData(undefined)
   }, [account])
 
-  useEffect(() => {
-    if (chain) {
-      setChain(chain)
-    }
-  }, [chain])
-
   const onSignCertificate = async () => {
     if (account && api) {
       try {
@@ -100,11 +94,13 @@ const PhatRpc: Page = () => {
     }
   }
 
-  const onSetChainInfo = async (chain: string, account_id: string) => {
+  const onSetChainInfo = async (setChain: string, account_id: string) => {
     if (!certificateData || !contract || !account) return
     const toastKey = toaster.info("Setting chain's RPC Node...", {
       autoHideDuration: 0,
     })
+    console.log(chain?.toString())
+    console.log(setChain?.toString())
     try {
       const signer = await getSigner(account)
       await contract.tx
@@ -142,51 +138,55 @@ const PhatRpc: Page = () => {
     }
   }
 
-  const onGetNextNonce = async (chain: any) => {
+  const onGetNextNonce = async (setChain: any) => {
     if (!certificateData || !contract) return
     const {output} = await contract.query.getNextNonce(
       certificateData as any,
       {},
       chain
     )
+    console.log(queryChain?.toString())
+    console.log(setChain?.toString())
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
     // eslint-disable-next-line no-console
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
     }
   }
 
-  const onGetRuntimeVersion = async (chain: any) => {
+  const onGetRuntimeVersion = async (setChain: any) => {
     if (!certificateData || !contract) return
     const {output} = await contract.query.getRuntimeVersion(
       certificateData as any,
       {},
       chain
     )
+    console.log(queryChain?.toString())
+    console.log(setChain?.toString())
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
     // eslint-disable-next-line no-console
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
     }
   }
 
-  const onGetGenesisHash = async (chain: any) => {
+  const onGetGenesisHash = async (setChain: any) => {
     if (!certificateData || !contract) return
     const {output} = await contract.query.getGenesisHash(
       certificateData as any,
       {},
-      chain
+      setChain
     )
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
     // eslint-disable-next-line no-console
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
@@ -198,39 +198,43 @@ const PhatRpc: Page = () => {
     const {output} = await contract.query.getApiKey(certificateData as any, {})
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
     }
   }
 
-  const onGetRpcEndpoint = async (chain: any) => {
+  const onGetRpcEndpoint = async (setChain: any) => {
     if (!certificateData || !contract) return
     const {output} = await contract.query.getRpcEndpoint(
       certificateData as any,
       {},
       chain
     )
+    console.log(queryChain?.toString())
+    console.log(setChain?.toString())
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
     }
   }
 
-  const onGetChainAccountId = async (chain: any) => {
+  const onGetChainAccountId = async (setChain: any) => {
     if (!certificateData || !contract) return
-    const {output} = await contract.query.getRpcEndpoint(
+    const {output} = await contract.query.getChainAccountId(
       certificateData as any,
       {},
       chain
     )
+    console.log(queryChain?.toString())
+    console.log(setChain?.toString())
     const outputJson = output?.toJSON() as any
     console.log(output?.toHuman())
-    if (outputJson.ok == true) {
+    if (outputJson.ok) {
       toaster.info(JSON.stringify(output?.toHuman()), {})
     } else {
       toaster.negative(outputJson.err, {})
@@ -242,7 +246,7 @@ const PhatRpc: Page = () => {
       <>
         <HeadingMedium as="h2">Set API Key</HeadingMedium>
         <ParagraphSmall>
-          API Key (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx):
+          API Key (XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX):
         </ParagraphSmall>
 
         <Block display="flex">
@@ -258,7 +262,7 @@ const PhatRpc: Page = () => {
             onChange={(e) => setApiKey(e.currentTarget.value)}
           />
           <Button
-            onClick={(e) => {
+            onClick={() => {
               onSetApiKey(apiKey)
             }}
             kind="secondary"
@@ -268,18 +272,33 @@ const PhatRpc: Page = () => {
         </Block>
 
         <HeadingMedium as="h2">Configure Chain Account ID</HeadingMedium>
-        <Block padding="0 20px" flex="0">
-          <Select
-            size="compact"
-            placeholder="Select"
-            options={dropDownOptions}
-            labelKey="key"
-            valueKey="value"
-            value={chain}
-            onChange={({value}) => setChain(value)}
-            overrides={{Root: {style: {width: '200px'}}}}
-          ></Select>
-        </Block>
+        <Block padding="0 20px" flex="0"></Block>
+        <Select
+          size="compact"
+          placeholder="Select"
+          options={dropDownOptions}
+          getOptionLabel={({option}) =>
+            option && (
+              <>
+                <LabelSmall>{option.label}</LabelSmall>
+                <MonoParagraphXSmall as="div">
+                  {option.label}
+                </MonoParagraphXSmall>
+              </>
+            )
+          }
+          getValueLabel={({option}) => (
+            <>
+              <LabelSmall>{option.label}</LabelSmall>
+              <MonoParagraphXSmall as="div">{option.label}</MonoParagraphXSmall>
+            </>
+          )}
+          labelKey="label"
+          valueKey="value"
+          onChange={(params) => setChain(params.option?.value)}
+          value={chain}
+          overrides={{Root: {style: {width: '200px'}}}}
+        ></Select>
         <ParagraphSmall>Account ID (SS58 Format):</ParagraphSmall>
 
         <Block display="flex">
@@ -295,7 +314,7 @@ const PhatRpc: Page = () => {
             onChange={(e) => setAccountId(e.currentTarget.value)}
           />
           <Button
-            onClick={(e) => {
+            onClick={() => {
               onSetChainInfo(chain, accountId)
             }}
             kind="secondary"
@@ -313,14 +332,32 @@ const PhatRpc: Page = () => {
             size="compact"
             placeholder="Select"
             options={dropDownOptions}
-            labelKey="key"
+            getOptionLabel={({option}) =>
+              option && (
+                <>
+                  <LabelSmall>{option.label}</LabelSmall>
+                  <MonoParagraphXSmall as="div">
+                    {option.label}
+                  </MonoParagraphXSmall>
+                </>
+              )
+            }
+            getValueLabel={({option}) => (
+              <>
+                <LabelSmall>{option.label}</LabelSmall>
+                <MonoParagraphXSmall as="div">
+                  {option.label}
+                </MonoParagraphXSmall>
+              </>
+            )}
+            labelKey="label"
             valueKey="value"
+            onChange={(params) => setQueryChain(params.option?.value)}
             value={queryChain}
-            onChange={({value}) => setQueryChain(value)}
             overrides={{Root: {style: {width: '200px'}}}}
           ></Select>
         </Block>
-
+        <ParagraphSmall>Query Functions</ParagraphSmall>
         <ButtonGroup>
           <Button
             disabled={!queryChain}
