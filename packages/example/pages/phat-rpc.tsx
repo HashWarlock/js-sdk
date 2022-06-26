@@ -18,6 +18,7 @@ import accountAtom from '../atoms/account'
 import {getSigner} from '../lib/polkadotExtension'
 import ContractLoader from '../components/ContractLoader'
 import {Select} from 'baseui/select'
+import {FormControl} from 'baseui/form-control'
 
 const PhatRpc: Page = () => {
   const [account] = useAtom(accountAtom)
@@ -28,6 +29,8 @@ const PhatRpc: Page = () => {
   const [accountId, setAccountId] = useState<string>('')
   const [chain, setChain] = useState<string>('')
   const [queryChain, setQueryChain] = useState<string>('')
+  const [value, setValue] = useState([])
+  const [queryValue, setQueryValue] = useState([])
   const dropDownOptions = [
     {label: 'Astar', value: 'astar'},
     {label: 'Encointer', value: 'encointer'},
@@ -147,14 +150,7 @@ const PhatRpc: Page = () => {
     )
     console.log(queryChain?.toString())
     console.log(setChain?.toString())
-    const outputJson = output?.toJSON() as any
-    console.log(output?.toHuman())
-    // eslint-disable-next-line no-console
-    if (outputJson.ok) {
-      toaster.info(JSON.stringify(output?.toHuman()), {})
-    } else {
-      toaster.negative(outputJson.err, {})
-    }
+    toaster.info(JSON.stringify(output?.toHuman()), {})
   }
 
   const onGetRuntimeVersion = async (setChain: any) => {
@@ -166,14 +162,7 @@ const PhatRpc: Page = () => {
     )
     console.log(queryChain?.toString())
     console.log(setChain?.toString())
-    const outputJson = output?.toJSON() as any
-    console.log(output?.toHuman())
-    // eslint-disable-next-line no-console
-    if (outputJson.ok) {
-      toaster.info(JSON.stringify(output?.toHuman()), {})
-    } else {
-      toaster.negative(outputJson.err, {})
-    }
+    toaster.info(JSON.stringify(output?.toHuman()), {})
   }
 
   const onGetGenesisHash = async (setChain: any) => {
@@ -183,14 +172,9 @@ const PhatRpc: Page = () => {
       {},
       setChain
     )
-    const outputJson = output?.toJSON() as any
-    console.log(output?.toHuman())
-    // eslint-disable-next-line no-console
-    if (outputJson.ok) {
-      toaster.info(JSON.stringify(output?.toHuman()), {})
-    } else {
-      toaster.negative(outputJson.err, {})
-    }
+    console.log(queryChain?.toString())
+    console.log(setChain?.toString())
+    toaster.info(JSON.stringify(output?.toHuman()), {})
   }
 
   const onGetApiKey = async () => {
@@ -214,13 +198,7 @@ const PhatRpc: Page = () => {
     )
     console.log(queryChain?.toString())
     console.log(setChain?.toString())
-    const outputJson = output?.toJSON() as any
-    console.log(output?.toHuman())
-    if (outputJson.ok) {
-      toaster.info(JSON.stringify(output?.toHuman()), {})
-    } else {
-      toaster.negative(outputJson.err, {})
-    }
+    toaster.info(JSON.stringify(output?.toHuman()), {})
   }
 
   const onGetChainAccountId = async (setChain: any) => {
@@ -232,13 +210,7 @@ const PhatRpc: Page = () => {
     )
     console.log(queryChain?.toString())
     console.log(setChain?.toString())
-    const outputJson = output?.toJSON() as any
-    console.log(output?.toHuman())
-    if (outputJson.ok) {
-      toaster.info(JSON.stringify(output?.toHuman()), {})
-    } else {
-      toaster.negative(outputJson.err, {})
-    }
+    toaster.info(JSON.stringify(output?.toHuman()), {})
   }
 
   return contract ? (
@@ -272,33 +244,40 @@ const PhatRpc: Page = () => {
         </Block>
 
         <HeadingMedium as="h2">Configure Chain Account ID</HeadingMedium>
-        <Block padding="0 20px" flex="0"></Block>
-        <Select
-          size="compact"
-          placeholder="Select"
-          options={dropDownOptions}
-          getOptionLabel={({option}) =>
-            option && (
+        <FormControl label="Chain">
+          <Select
+            size="compact"
+            placeholder="Select"
+            options={dropDownOptions}
+            getOptionLabel={({option}) =>
+              option && (
+                <>
+                  <LabelSmall>{option.label}</LabelSmall>
+                  <MonoParagraphXSmall as="div">
+                    {option.label}
+                  </MonoParagraphXSmall>
+                </>
+              )
+            }
+            getValueLabel={({option}) => (
               <>
                 <LabelSmall>{option.label}</LabelSmall>
                 <MonoParagraphXSmall as="div">
                   {option.label}
                 </MonoParagraphXSmall>
               </>
-            )
-          }
-          getValueLabel={({option}) => (
-            <>
-              <LabelSmall>{option.label}</LabelSmall>
-              <MonoParagraphXSmall as="div">{option.label}</MonoParagraphXSmall>
-            </>
-          )}
-          labelKey="label"
-          valueKey="value"
-          onChange={(params) => setChain(params.option?.value)}
-          value={chain}
-          overrides={{Root: {style: {width: '200px'}}}}
-        ></Select>
+            )}
+            searchable={false}
+            labelKey="label"
+            valueKey="value"
+            value={value}
+            onChange={(params) => {
+              setChain(params.option?.value)
+              setValue(params.value)
+            }}
+            overrides={{Root: {style: {width: '200px'}}}}
+          ></Select>
+        </FormControl>
         <ParagraphSmall>Account ID (SS58 Format):</ParagraphSmall>
 
         <Block display="flex">
@@ -327,7 +306,7 @@ const PhatRpc: Page = () => {
           Account Functions
         </HeadingMedium>
         <ParagraphSmall>Query Chain RPC Nodes</ParagraphSmall>
-        <Block padding="0 20px" flex="0">
+        <FormControl label="Chain">
           <Select
             size="compact"
             placeholder="Select"
@@ -350,13 +329,17 @@ const PhatRpc: Page = () => {
                 </MonoParagraphXSmall>
               </>
             )}
+            searchable={false}
             labelKey="label"
             valueKey="value"
-            onChange={(params) => setQueryChain(params.option?.value)}
-            value={queryChain}
+            value={queryValue}
+            onChange={(params) => {
+              setQueryChain(params.option?.value)
+              setQueryValue(params.value)
+            }}
             overrides={{Root: {style: {width: '200px'}}}}
           ></Select>
-        </Block>
+        </FormControl>
         <ParagraphSmall>Query Functions</ParagraphSmall>
         <ButtonGroup>
           <Button
@@ -376,7 +359,7 @@ const PhatRpc: Page = () => {
             Chain Account ID
           </Button>
           <Button
-            disabled={!certificateData}
+            disabled={!queryChain}
             onClick={() => {
               onGetNextNonce(queryChain)
             }}
@@ -384,7 +367,7 @@ const PhatRpc: Page = () => {
             Next Nonce
           </Button>
           <Button
-            disabled={!certificateData}
+            disabled={!queryChain}
             onClick={() => {
               onGetGenesisHash(queryChain)
             }}
@@ -392,7 +375,7 @@ const PhatRpc: Page = () => {
             Genesis Hash
           </Button>
           <Button
-            disabled={!certificateData}
+            disabled={!queryChain}
             onClick={() => {
               onGetRuntimeVersion(queryChain)
             }}
